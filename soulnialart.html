@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memory Match Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f4f4f4;
+        }
+
+        .game-container {
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 20px;
+        }
+
+        .board {
+            display: grid;
+            grid-template-columns: repeat(4, 100px);
+            grid-template-rows: repeat(4, 100px);
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            width: 100px;
+            height: 100px;
+            background-color: pink; /* Set background color to pink */
+            border-radius: 10px;
+            border: 3px solid darkpink; /* Set border color to dark pink */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .card.flipped {
+            background-color: white;
+        }
+
+        .card.matched {
+            background-color: lightgreen;
+            cursor: default;
+        }
+
+        .score, .timer {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 1rem;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .game-over {
+            font-size: 2rem;
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>Memory Match Game</h1>
+        <div id="board" class="board"></div>
+        <div id="score" class="score">Score: 0</div>
+        <div id="timer" class="timer">Time: 30s</div>
+        <button id="restart">Restart</button>
+        <div id="gameOver" class="game-over"></div>
+    </div>
+
+    <script>
+        const board = document.getElementById('board');
+        const scoreDisplay = document.getElementById('score');
+        const timerDisplay = document.getElementById('timer');
+        const restartButton = document.getElementById('restart');
+        const gameOverDisplay = document.getElementById('gameOver');
+        let cards = [];
+        let flippedCards = [];
+        let matchedPairs = 0;
+        let score = 0;
+        let timer = 30;  // 30 seconds countdown
+        let gameTimer;
+        let gameInProgress = false;
+
+        const cardValues = ['🍎', '🍌', '🍒', '🍓', '🍉', '🍊', '🍍', '🍑'];
+
+        function createBoard() {
+            let cardDeck = [...cardValues, ...cardValues];
+            cardDeck = shuffle(cardDeck);
+
+            cardDeck.forEach(value => {
+                const card = document.createElement('div');
+                card.classList.add('card');
+                card.dataset.value = value;
+                card.addEventListener('click', flipCard);
+                board.appendChild(card);
+            });
+        }
+
+        function shuffle(array) {
+            return array.sort(() => Math.random() - 0.5);
+        }
+
+        function flipCard() {
+            if (flippedCards.length === 2 || this.classList.contains('flipped') || this.classList.contains('matched')) {
+                return;
+            }
+
+            this.classList.add('flipped');
+            this.textContent = this.dataset.value;
+            flippedCards.push(this);
+
+            if (flippedCards.length === 2) {
+                checkMatch();
+            }
+        }
+
+        function checkMatch() {
+            const [firstCard, secondCard] = flippedCards;
+
+            if (firstCard.dataset.value === secondCard.dataset.value) {
+                firstCard.classList.add('matched');
+                secondCard.classList.add('matched');
+                matchedPairs++;
+                score += 10;
+                updateScore();
+
+                if (matchedPairs === cardValues.length) {
+                    clearInterval(gameTimer);  // Stop the timer when game is completed
+                    setTimeout(() => alert('You won!'), 500);
+                }
+            } else {
+                setTimeout(() => {
+                    firstCard.classList.remove('flipped');
+                    secondCard.classList.remove('flipped');
+                    firstCard.textContent = '';
+                    secondCard.textContent = '';
+                }, 1000);
+            }
+
+            flippedCards = [];
+        }
+
+        function updateScore() {
+            scoreDisplay.textContent = `Score: ${score}`;
+        }
+
+        function startTimer() {
+            gameInProgress = true;
+            gameTimer = setInterval(() => {
+                timer--;
+                timerDisplay.textContent = `Time: ${timer}s`;
+
+                if (timer <= 0) {
+                    clearInterval(gameTimer);
+                    gameInProgress = false;
+                    gameOverDisplay.textContent = 'Game Over! Time is up!';
+                    setTimeout(() => alert('Game Over! Time is up!'), 500);
+                }
+            }, 1000);
+        }
+
+        function restartGame() {
+            board.innerHTML = '';
+            flippedCards = [];
+            matchedPairs = 0;
+            score = 0;
+            timer = 60;
+            updateScore();
+            gameOverDisplay.textContent = '';
+            timerDisplay.textContent = `Time: 30s`;
+            createBoard();
+            if (!gameInProgress) startTimer();
+        }
+
+        restartButton.addEventListener('click', restartGame);
+
+        createBoard();
+        startTimer();  // Start the timer when the game loads
+    </script>
+</body>
+</html>
